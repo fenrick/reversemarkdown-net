@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.CompilerServices;
 using HtmlAgilityPack;
 
 namespace ReverseMarkdown.Converters
@@ -22,19 +21,23 @@ namespace ReverseMarkdown.Converters
             {
                 return "";
             }
-            
+
+            // if parent is an ordered or unordered list
+            // then table need to be indented as well
+            var indent = IndentationFor(node);
+
             if (IsTableHeaderRow(node) || UseFirstRowAsHeaderRow(node))
             {
-                underline = UnderlineFor(node);
+                underline = UnderlineFor(node, indent);
             }
 
-            return $"|{content}{Environment.NewLine}{underline}";
+            return $"{indent}|{content}{Environment.NewLine}{underline}";
         }
 
         private bool UseFirstRowAsHeaderRow(HtmlNode node)
         {
-            var tableNode = node.ParentNode;
-            var firstRow = tableNode.SelectNodes("tr")?.FirstOrDefault();
+            var tableNode = node.Ancestors("table").FirstOrDefault();
+            var firstRow = tableNode?.SelectSingleNode(".//tr");
 
             if (firstRow == null)
             {
@@ -42,7 +45,7 @@ namespace ReverseMarkdown.Converters
             }
 
             var isFirstRow = firstRow == node;
-            var hasNoHeaderRow = tableNode.SelectNodes("//th")?.FirstOrDefault() == null;
+            var hasNoHeaderRow = tableNode.SelectNodes(".//th")?.FirstOrDefault() == null;
 
             return isFirstRow
                    && hasNoHeaderRow
@@ -55,7 +58,7 @@ namespace ReverseMarkdown.Converters
             return node.ChildNodes.FindFirst("th") != null;
         }
 
-        private string UnderlineFor(HtmlNode node)
+        private static string UnderlineFor(HtmlNode node, string indent)
         {
             var colCount = node.ChildNodes.Count(child => child.Name == "th" || child.Name == "td");
 
@@ -68,7 +71,7 @@ namespace ReverseMarkdown.Converters
 
             var colsAggregated = string.Join(" | ", cols);
 
-            return $"| {colsAggregated} |{Environment.NewLine}";
+            return $"{indent}| {colsAggregated} |{Environment.NewLine}";
         }
     }
 }

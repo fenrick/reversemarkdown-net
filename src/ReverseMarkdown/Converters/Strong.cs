@@ -8,7 +8,7 @@ namespace ReverseMarkdown.Converters
         public Strong(Converter converter) : base(converter)
         {
             var elements = new [] { "strong", "b" };
-            
+
             foreach (var element in elements)
             {
                 Converter.Register(element, this);
@@ -18,13 +18,17 @@ namespace ReverseMarkdown.Converters
         public override string Convert(HtmlNode node)
         {
             var content = TreatChildren(node);
-            if (string.IsNullOrEmpty(content.Trim()) || AlreadyBold(node))
+            if (string.IsNullOrEmpty(content) || AlreadyBold(node))
             {
                 return content;
             }
             else
             {
-                return $"**{content.Trim()}**";
+                var spaceSuffix = (node.NextSibling?.Name == "strong" || node.NextSibling?.Name == "b")
+                    ? " "
+                    : "";
+
+                return $"**{content}**{spaceSuffix}";
             }
         }
 

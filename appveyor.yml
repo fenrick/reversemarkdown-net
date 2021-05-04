@@ -2,14 +2,14 @@ version: build-{build}
 
 configuration: Release
 
-os: Visual Studio 2017
+os: Visual Studio 2019
 
 environment:
   DOTNET_CLI_TELEMETRY_OPTOUT: true
   DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
-  TARGET_BUILD_VERSION: '3.8.0'
+  TARGET_BUILD_VERSION: '3.19.0'
   NUGET_DEPLOY_KEY:
-    secure: 6yOBK0JyKMTykW1zW6B4mvc9mgQGnRGex15KG8VhOre/DSTkrUYtgbPCpiBlcX/T
+    secure: ARJT2riPVT98BTyiNU6cDD0s1vK8MB/JHbjwFV4lmnuPVEfkeuJJKqLaqIUQqVkg
 
 nuget:
   disable_publish_on_pr: true
@@ -20,7 +20,7 @@ before_build:
 
 build_script:
 - dotnet build .\src\ReverseMarkdown.sln --configuration Release /p:Version=%TARGET_BUILD_VERSION%
-  
+
 test_script:
   - dotnet test .\src\ReverseMarkdown.Test\ReverseMarkdown.Test.csproj --configuration Release
 
@@ -38,3 +38,6 @@ deploy:
     APPVEYOR_REPO_TAG: true
 after_deploy: # workaround to publish snupkg to NuGet
   - ps: Get-ChildItem -Path *.snupkg -Recurse | % { dotnet nuget push $_.FullName -s https://api.nuget.org/v3/index.json -k $env:NUGET_DEPLOY_KEY }
+
+on_failure:
+  - ps: Get-ChildItem *.received.* -recurse | % { Push-AppveyorArtifact $_.FullName -FileName $_.Name }

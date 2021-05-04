@@ -36,7 +36,7 @@ namespace ReverseMarkdown.Converters
                 .Replace("%3C", "&lt;")
                 .Replace("%3E", "&gt;");
 
-            //strip leading spaces and tabs for text within list item 
+            //strip leading spaces and tabs for text within list item
             var parent = node.ParentNode;
 
             switch (parent.Name)
@@ -47,12 +47,9 @@ namespace ReverseMarkdown.Converters
                     break;
             }
 
-            content = content.Replace("\r\n", "<br>");
-            content = content.Replace("\n", "<br>");
-
+            content = ReplaceNewlineChars(parent.Name, content);
             content =  EscapeKeyChars(content);
-            
-            content = PreserveKeyCharswithinBackTicks(content);
+            content = PreserveKeyCharsWithinBackTicks(content);
 
             return content;
         }
@@ -63,16 +60,16 @@ namespace ReverseMarkdown.Converters
             {
                 content = content.Replace(item.Key, item.Value);
             }
-            
+
             return content;
         }
-        
+
         private static string TreatEmpty(HtmlNode node)
         {
             var content = "";
 
             var parent = node.ParentNode;
-            
+
             if (parent.Name == "ol" || parent.Name == "ul")
             {
                 content = "";
@@ -81,15 +78,25 @@ namespace ReverseMarkdown.Converters
             {
                 content = " ";
             }
-            
+
             return content;
         }
-        
-        private static string PreserveKeyCharswithinBackTicks(string content)
+
+        private static string PreserveKeyCharsWithinBackTicks(string content)
         {
             var rx = new Regex("`.*?`");
 
             content = rx.Replace(content, p => p.Value.Replace(@"\*", "*").Replace(@"\_", "_"));
+
+            return content;
+        }
+
+        private static string ReplaceNewlineChars(string parentNodeName, string content)
+        {
+            if (parentNodeName != "p" && parentNodeName != "#document") return content;
+
+            content = content.Replace("\r\n", " ");
+            content = content.Replace("\n", " ");
 
             return content;
         }

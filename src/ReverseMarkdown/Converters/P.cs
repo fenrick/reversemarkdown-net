@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Linq;
-
 using HtmlAgilityPack;
 
 namespace ReverseMarkdown.Converters
@@ -15,24 +14,28 @@ namespace ReverseMarkdown.Converters
         public override string Convert(HtmlNode node)
         {
             var indentation = IndentationFor(node);
-            return $"{indentation}{TreatChildren(node).Trim()}{Environment.NewLine}";
+            var newlineAfter = NewlineAfter(node);
+
+            return $"{indentation}{TreatChildren(node).Trim()}{newlineAfter}";
         }
 
         private static string IndentationFor(HtmlNode node)
         {
             string parentName = node.ParentNode.Name.ToLowerInvariant();
 
-            // If p follows a list item, indent it instead of adding a leading newline
+            // If p follows a list item, add newline and indent it
             var length = node.Ancestors("ol").Count() + node.Ancestors("ul").Count();
             bool parentIsList = parentName == "li" || parentName == "ol" || parentName == "ul";
             if (parentIsList && node.ParentNode.FirstChild != node)
-                return new string(' ', length * 4);
+                return Environment.NewLine + (new string(' ', length * 4));
 
             // If p is at the start of a table cell, no leading newline
-            if ((parentName == "td" || parentName == "th") && node.ParentNode.FirstChild == node)
-                return string.Empty;
+            return Td.FirstNodeWithinCell(node) ? "" : Environment.NewLine;
+        }
 
-            return Environment.NewLine;
+        private static string NewlineAfter(HtmlNode node)
+        {
+            return Td.LastNodeWithinCell(node) ? "" : Environment.NewLine;
         }
     }
 }

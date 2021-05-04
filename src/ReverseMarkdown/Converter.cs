@@ -22,7 +22,7 @@ namespace ReverseMarkdown
 
             // instantiate all converters excluding the unknown tags converters
             foreach (var ctype in typeof(IConverter).GetTypeInfo().Assembly.GetTypes()
-                .Where(t => t.GetTypeInfo().GetInterfaces().Contains(typeof(IConverter)) && 
+                .Where(t => t.GetTypeInfo().GetInterfaces().Contains(typeof(IConverter)) &&
                 !t.GetTypeInfo().IsAbstract
                 && t != typeof(PassThrough)
                 && t != typeof(Drop)
@@ -48,6 +48,12 @@ namespace ReverseMarkdown
 
             var root = doc.DocumentNode;
 
+            // ensure to start from body and ignore head etc
+            if (root.Descendants("body").Any())
+            {
+                root = root.SelectSingleNode("//body");
+            }
+
             var result = Lookup(root.Name).Convert(root);
 
             return result;
@@ -60,6 +66,12 @@ namespace ReverseMarkdown
 
         public IConverter Lookup(string tagName)
         {
+            // if a tag is in the pass through list then use the pass through tags converter
+            if (Config.PassThroughTags.Contains(tagName))
+            {
+                return _passThroughTagsConverter;
+            }
+
             return _converters.ContainsKey(tagName) ? _converters[tagName] : GetDefaultConverter(tagName);
         }
 
